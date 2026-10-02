@@ -15,14 +15,12 @@ print('# of gpus: ', torch.cuda.device_count())
 
 def get_llm(model_name, cache_dir="llm_weights"):
     model = AutoModelForCausalLM.from_pretrained(
-        model_name, 
-        torch_dtype=torch.float16, 
-        cache_dir=cache_dir, 
-        low_cpu_mem_usage=True, 
-        device_map="auto"
+        model_name,
+        torch_dtype=torch.float32,
+        cache_dir=cache_dir
     )
 
-    model.seqlen = model.config.max_position_embeddings 
+    model.seqlen = model.config.max_position_embeddings
     return model
 
 def main():
@@ -58,7 +56,7 @@ def main():
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(args.model, use_fast=False)
 
-    device = torch.device("cuda:0")
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu") # device = torch.device("cuda")
     if "30b" in args.model or "65b" in args.model: # for 30b and 65b we use device_map to load onto multiple A6000 GPUs, thus the processing here.
         device = model.hf_device_map["lm_head"]
     print("use device ", device)
